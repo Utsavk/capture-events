@@ -31,11 +31,14 @@ type ReqParams struct {
 	Method             Method
 	Headers            map[string]string
 	Form               url.Values
-	Timeout            int64
+	TimeoutMS          int64
 	InsecureSkipVerify bool
 	RawBody            []byte
+	MaxRetry           int
 	retry              int
 }
+
+const ReqDefaultMaxRetry = 3
 
 type Response struct {
 	Body       []byte
@@ -54,6 +57,13 @@ func getClient(timeoutMS int64, insecureSkipVerify bool) *http.Client {
 }
 
 func Send(params *ReqParams) (*Response, error) {
+	if params.MaxRetry > 0 {
+		if params.retry > params.MaxRetry {
+			return nil, fmt.Errorf("maximum retry %d exhausted", params.MaxRetry)
+		}
+	} else if params.retry > ReqDefaultMaxRetry {
+		return nil, fmt.Errorf("maximum retry %d exhausted", ReqDefaultMaxRetry)
+	}
 	var bodyReader io.Reader
 	var hostsCopy []string
 
@@ -91,7 +101,7 @@ func Send(params *ReqParams) (*Response, error) {
 		}
 	}
 
-	client := getClient(params.Timeout, params.InsecureSkipVerify)
+	client := getClient(params.TimeoutMS, params.InsecureSkipVerify)
 	rawRes, err := client.Do(req)
 	var response Response
 	if err != nil {

@@ -14,14 +14,15 @@ var upgrader = websocket.FastHTTPUpgrader{
 }
 
 func websocketHandler(ws *websocket.Conn) {
+	s := ingestPkg.CreateSession()
 	for {
 		mt, message, err := ws.ReadMessage()
 		if err != nil {
 			golog.Error(err)
 			return
 		}
-		ingestPkg.Ingest(message)
-		ws.WriteMessage(mt, []byte("ok"))
+		res := s.Ingest(message)
+		ws.WriteMessage(mt, []byte(res))
 	}
 }
 

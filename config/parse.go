@@ -11,6 +11,7 @@ import (
 type Config struct {
 	Env    string
 	Server Server
+	DB     map[string]interface{}
 }
 
 type Server struct {
@@ -41,7 +42,16 @@ func Parse() bool {
 		golog.Error(err)
 		return false
 	}
+	err = parseDBConf()
+	if err != nil {
+		golog.Error(err)
+		return false
+	}
 	return true
+}
+
+func parseDBConf() error {
+	return parseESConf()
 }
 
 func validate() error {
